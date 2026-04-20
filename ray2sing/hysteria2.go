@@ -17,9 +17,15 @@ func Hysteria2Singbox(hysteria2Url string) (*T.Outbound, error) {
 	var ObfsOpts *T.Hysteria2Obfs
 	ObfsOpts = nil
 	if obfs, ok := decoded["obfs"]; ok && obfs != "" {
+		// normalizeStr (url_schema.go) replaces '-'/'_' with space; URL
+		// param "obfs-password" (or "obfs_password") is stored as "obfs password".
+		obfsPass := decoded["obfs password"]
+		if obfsPass == "" {
+			obfsPass = decoded["obfs-password"]
+		}
 		ObfsOpts = &T.Hysteria2Obfs{
 			Type:     obfs,
-			Password: decoded["obfs-password"],
+			Password: obfsPass,
 		}
 	}
 
@@ -67,7 +73,11 @@ func Hysteria2Singbox(hysteria2Url string) (*T.Outbound, error) {
 		opts.ServerPorts = badoption.Listable[string](u.ServerPorts)
 		// Default hop interval 30s if not specified in query
 		hopSecs := 30
-		if hi := decoded["hop-interval"]; hi != "" {
+		hi := decoded["hop interval"]
+		if hi == "" {
+			hi = decoded["hop-interval"]
+		}
+		if hi != "" {
 			if n, err := strconv.Atoi(hi); err == nil && n > 0 {
 				hopSecs = n
 			}
